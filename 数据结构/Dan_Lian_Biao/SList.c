@@ -1,14 +1,34 @@
 #include"SList.h"
-void SLPrint(SLNode* phead)
+void SLPushBack(SLNode** pphead,SLDataType x)
 {
-    SLNode* cur = phead;
-    while(cur)
+    assert(pphead);
+    SLNode* newnode = SLBuyNode(x);
+    if(*pphead == NULL)
     {
-        printf("%d->",cur->data);
-        cur=cur->next;
+        *pphead = newnode;
     }
-    printf("NULL\n");
+    else 
+    {
+        SLNode* cur = *pphead;
+        while(cur->next!=NULL)
+        {
+            cur = cur->next;
+        }
+        cur->next=newnode;
+    }
 }
+//头插
+void SLPushFront(SLNode** pphead,SLDataType x)
+{
+    assert(pphead);
+    //newnode *pphead;
+    SLNode* newnode = SLBuyNode(x);
+    newnode->next = *pphead;
+    *pphead = newnode;
+}
+
+
+//插入节点
 SLNode* SLBuyNode(SLDataType x)
 {
     SLNode* newnode = (SLNode*)malloc(sizeof(SLNode));
@@ -17,78 +37,56 @@ SLNode* SLBuyNode(SLDataType x)
         perror("malloc fail");
         return NULL;
     }
-    newnode->next = NULL;
+    newnode->next=NULL;
     newnode->data=x;
     return newnode;
 }
 
-void SLPushBack(SLNode** pphead,SLDataType x)
-{
-    assert(pphead);
-    SLNode* newnode = SLBuyNode(x);
-    if(*pphead==NULL)
-    {
-        *pphead = newnode;
-    }
-    else
-    {
-        SLNode* tail = *pphead;
-        while(tail->next!=NULL)
-        {
-            tail =tail->next;
-        }
-        tail->next=newnode;
-    }
-}
-
-void SLPushFront(SLNode** pphead,SLDataType x)
-{
-    assert(pphead);
-    SLNode* newnode = SLBuyNode(x);
-    newnode->next = *pphead;
-    *pphead=newnode;
-}
-
+//尾删
 void SLPopBack(SLNode** pphead)
 {
     assert(pphead);
     assert(*pphead);
-    if((*pphead)->next == NULL)
+    if((*pphead)->next==NULL)
     {
         free(*pphead);
-        *pphead = NULL;
+        *pphead=NULL;
     }
     else 
     {
-        SLNode* tail = *pphead;
-        SLNode* prev = NULL; 
-        while(tail->next != NULL)
+        SLNode* cur = *pphead;
+        SLNode* prev = NULL;
+        while(cur->next != NULL)
         {
-            prev =tail;
-            tail=tail->next;
+            prev=cur;
+            cur=cur->next;
         }
-        free(tail);
-        tail=NULL;
-        prev->next=NULL;
+        //prev cur 
+        free(cur);
+        cur=NULL;
+        prev->next = NULL;
     }
 }
 
+//头删
 void SLPopFront(SLNode** pphead)
 {
-    assert(pphead);
     assert(*pphead);
-    SLNode* front = (*pphead)->next;
+    assert(pphead);
+    SLNode* front = *pphead;
+    *pphead = front->next;
     free(front);
-    front = NULL;
-    *pphead = front;
+    front=NULL;
 }
 
+//查找
 SLNode* SLFind(SLNode* phead,SLDataType x)
 {
+    assert(phead);
     SLNode* cur = phead;
     while(cur)
     {
-        if(cur->data==x)
+        if(cur->data == x)
         {
             return cur;
         }
@@ -97,33 +95,37 @@ SLNode* SLFind(SLNode* phead,SLDataType x)
     return NULL;
 }
 
+//插入
 void SLInsertFront(SLNode** pphead,SLNode* pos,SLDataType x)
 {
     assert(pos);
+    assert(*pphead);
     assert(pphead);
-    SLNode* newnode=SLBuyNode(x);
     if(*pphead==pos)
     {
-        SLPushFront(pphead,x);   
+        SLPushFront(pphead,x);
     }
     else 
     {
+        SLNode* newnode = SLBuyNode(x);
         SLNode* cur = *pphead;
+        //cur pos
         while(cur->next!=pos)
         {
             cur=cur->next;
         }
-        //cur pos 
-        cur->next =newnode;
-        newnode->next = pos;
+        cur->next = newnode;
+        newnode->next=pos;
     }
 }
+
+//删除
 void SLErease(SLNode** pphead,SLNode* pos)
 {
     assert(pos);
-    assert(pphead);
     assert(*pphead);
-    if(*pphead == pos)
+    assert(pphead);
+    if(*pphead==pos)
     {
         SLPopFront(pphead);
     }
@@ -134,30 +136,31 @@ void SLErease(SLNode** pphead,SLNode* pos)
         {
             cur=cur->next;
         }
-        cur->next = pos->next;
+        cur->next=pos->next;
         free(pos);
         pos=NULL;
     }
 }
-void SLInsertAfter(SLNode**pphead,SLNode* pos,SLDataType x)
-{
-    assert(pos);
-    assert(pphead);
-    assert(*pphead);
-    //pos 
-    SLNode* newnode =SLBuyNode(x);
-    SLNode* cur = pos->next;
-    pos->next = newnode;
-    newnode->next = cur;
-}
-
+//删除
 void SLEreaseAfter(SLNode** pphead,SLNode* pos)
 {
     assert(pos);
+    assert(*pphead);
     assert(pphead);
     //pos 
     SLNode* cur = pos->next;
-    pos->next = cur->next; 
+    pos->next = cur->next;
     free(cur);
     cur=NULL;
+}
+
+void SLPrint(SLNode* phead)
+{
+    SLNode* cur = phead;
+    while(cur)
+    {
+        printf("%d->",cur->data);
+        cur=cur->next;
+    }
+    printf("NULL\n");
 }

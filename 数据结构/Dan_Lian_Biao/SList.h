@@ -1,40 +1,43 @@
-#include<stdio.h>
-#include <assert.h>
+#include<assert.h>
 #include<stdlib.h>
-tydepef int SLDataType;
-
+#include<stdio.h>
+typedef int SLDataType;
 typedef struct SLNode
 {
-    DataType data;
+    SLDataType data;   
     struct SLNode* next;
 }SLNode;
+
 //尾插
 void SLPushBack(SLNode** pphead,SLDataType x);
 
-//头插
-void SLPushFront(SLNode** pphead,SLDataType x);
-
-//插入节点
+//创建节点
 SLNode* SLBuyNode(SLDataType x);
 
 //尾删
 void SLPopBack(SLNode** pphead);
 
+//头插
+void SLPushFront(SLNode** pphead,SLDataType x);
+
 //头删
 void SLPopFront(SLNode** pphead);
+
+//输出
+void SLPrint(SLNode* phead);
 
 //查找
 SLNode* SLFind(SLNode* phead,SLDataType x);
 
-//插入
+//pos前面插入
 void SLInsert(SLNode** pphead,SLNode* pos,SLDataType x);
 
-//删除
+//pos位置删除
 void SLErease(SLNode** pphead,SLNode* pos);
 
-//删除
-void SLEreaseAfter(SLNode** pphead,SLNode* pos);
+//pos后面插入
+void SLInsertAfter(SLNode** pphead,SLNode* pos,SLDataType x);
 
-//输出
-void SLPrint(SLNode* phead);
+//pos后面删除
+void SLErease(SLNode** pphead,SLNode* pos);
 

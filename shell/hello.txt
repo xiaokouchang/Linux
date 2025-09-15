@@ -1,0 +1,10 @@
+total 28
+-rw-rw-r-- 1 xpr xpr     0 Sep  3 12:19 hello.txt
+-rw-rw-r-- 1 xpr xpr    78 Aug 30 12:41 makefile
+-rwxrwxr-x 1 xpr xpr 14064 Sep  3 12:15 [0m[01;32mmyshell[0m
+-rw-rw-r-- 1 xpr xpr  5153 Sep  3 12:15 myshell.c
+total 32
+-rw-rw-r-- 1 xpr xpr   222 Sep  3 12:19 hello.txt
+-rw-rw-r-- 1 xpr xpr    78 Aug 30 12:41 makefile
+-rwxrwxr-x 1 xpr xpr 14064 Sep  3 12:15 [0m[01;32mmyshell[0m
+-rw-rw-r-- 1 xpr xpr  5153 Sep  3 12:15 myshell.c

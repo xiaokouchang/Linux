@@ -1,11 +1,13 @@
 #include<stdio.h>
 #include<stdlib.h>
+#include<ctype.h>
 #include<assert.h>
 #include<string.h>
 #include<stdlib.h>
 #include<unistd.h>
 #include<sys/types.h>
 #include<sys/wait.h>
+#include<fcntl.h>
 #define LEFT "["
 #define RIGHT "]"
 #define LABLE "$"
@@ -13,6 +15,12 @@
 #define ARGC_SIZE 32
 #define DELIM " \t"
 #define EXIT_CODE 44 //退出码
+
+#define NONE        -1
+#define IN_RDIR     0   //输入重定向
+#define OUT_RDIR    1   //输出重定向
+#define APPEND_RDIR 2   //追加重定向
+
 int lastcode = 0;
 int quit = 0;
 extern char** environ;
@@ -20,6 +28,8 @@ char commandline[LINE_SIZE];
 char* argv[ARGC_SIZE] = { NULL }; 
 char pwd[LINE_SIZE];
 char myenv[LINE_SIZE];
+char *rdirfilename = NULL;
+int rdir = NONE;
 const char* getusername()
 {
     //获取用户名
@@ -34,6 +44,59 @@ void getpwd()
 {
     getcwd(pwd,sizeof(pwd));
 }
+void check_redir(char *cmd)
+{
+    //ls -al -n
+    //ls -al -n >/</>> filename.txt
+    char *pos = cmd;
+    while(*pos)
+    {
+        if(*pos == '>')
+        {
+            if(*(pos + 1) == '>')
+            {
+                *pos++ = '\0';
+                *pos++ = '\0';
+                while(isspace(*pos))
+                {
+                    pos++;
+                }
+                rdirfilename = pos;
+                rdir = APPEND_RDIR;
+                break;
+            }
+            else 
+            {
+                *pos = '\0';
+                pos++;
+                while(isspace(*pos))
+                {
+                    pos++;
+                }
+                rdirfilename = pos;
+                rdir = OUT_RDIR;
+                break;
+            }
+        }    
+        else if(*pos == '<')
+        {
+            *pos = '\0';
+            pos++;
+            while(isspace(*pos))
+            {
+                pos++;
+            }
+            rdirfilename = pos;
+            rdir=IN_RDIR;
+            break;
+        }
+        else 
+        {
+            
+        }
+        pos++;//遍历字符串
+    }
+}
 void interact(char* cline,int size)
 {  
     getpwd();
@@ -42,6 +105,8 @@ void interact(char* cline,int size)
     assert(s!=NULL);//编译的时候有效果,运行的时候没有效果,debug下有效果
     (void)s;//s在后面不使用,防止编译器报错或者警告
     cline[strlen(cline)-1]='\0';//fgets读取到了回车的\n,去掉\n
+    //ls -a -l > myfile.txt
+    check_redir(cline);
 }
 int splitstring(char cline[],char* _argv[])
 {
@@ -60,6 +125,24 @@ void NormalExcute(char* _argv[])
     }
     else if(id == 0)
     {
+        int fd = 0;
+        //进程历史打开的文件与进行的各种重定向关系都和未来进行程序替换无关
+        //程序替换并不影响文件访问
+        if(rdir == IN_RDIR)
+        {
+            fd = open(rdirfilename,O_RDONLY);
+            dup2(fd,0);
+        }
+        else if(rdir == OUT_RDIR)
+        {
+            fd = open(rdirfilename,O_CREAT|O_WRONLY|O_TRUNC,0666);
+            dup2(fd,1);
+        }
+        else if(rdir == APPEND_RDIR)
+        {
+            fd = open(rdirfilename,O_CREAT|O_WRONLY|O_APPEND,0666);
+            dup2(fd,1);
+        }
         //子进程执行命令
         //execvpe(_argv[0],_argv,environ);
         execvp(_argv[0],_argv);
@@ -124,6 +207,8 @@ int main()
 {
     while(!quit)
     {
+        rdirfilename = NULL;
+        rdir = NONE;
         //交互问题,获取命令行
         interact(commandline,sizeof(commandline));
 

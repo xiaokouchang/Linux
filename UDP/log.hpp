@@ -8,20 +8,20 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <string>
 using namespace std;
 #define SIZE 1024
-//日志危险等级
+
 #define Info 0
 #define Debug 1
 #define Warning 2
 #define Error 3
 #define Fatal 4
 
-//日志显示
 #define Screen 1
 #define Onefile 2
 #define Classfile 3
-//日志存放位置
+
 #define LogFile "log.txt"
 
 class Log
@@ -54,7 +54,6 @@ public:
             return "None";
         }
     }
-
     // void logmessage(int level, const char *format, ...)
     // {
     //     time_t t = time(nullptr);
@@ -64,8 +63,8 @@ public:
     //              ctime->tm_year + 1900, ctime->tm_mon + 1, ctime->tm_mday,
     //              ctime->tm_hour, ctime->tm_min, ctime->tm_sec);
 
-    //     va_list s;
-    //     va_start(s, format);
+    //     // va_list s;
+    //     // va_start(s, format);
     //     char rightbuffer[SIZE];
     //     vsnprintf(rightbuffer, sizeof(rightbuffer), format, s);
     //     // va_end(s);
@@ -97,9 +96,15 @@ public:
     void printOneFile(const std::string &logname, const std::string &logtxt)
     {
         std::string _logname = path + logname;
-        int fd = open(_logname.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0666); // "log.txt"
+        // 新增：打印日志路径，确认拼接是否正确
+        std::cout << "[Debug] Log path: " << _logname << std::endl;
+
+        int fd = open(_logname.c_str(), O_WRONLY | O_CREAT | O_APPEND, 0666);
         if (fd < 0)
+        {
+            std::cerr << "open failed! errno: " << errno << ", msg: " << strerror(errno) << std::endl;
             return;
+        }
         write(fd, logtxt.c_str(), logtxt.size());
         close(fd);
     }
@@ -133,6 +138,8 @@ public:
         char logtxt[SIZE * 2];
         snprintf(logtxt, sizeof(logtxt), "%s %s", leftbuffer, rightbuffer);
 
+        // 新增：调试输出logtxt内容，确认是否有值
+        printf("[Debug] logtxt content: %s\n", logtxt);
         // printf("%s", logtxt); // 暂时打印
         printLog(level, logtxt);
     }
@@ -141,19 +148,19 @@ private:
     int printMethod;
     std::string path;
 };
-//可变参数必须要有至少一个具体的参数
-int sum(int n,...)
-{
-    //va_list和va_start都是宏
-    va_list s;//char*
-    va_start(s, n);//实例化是从右向左进行实例化的,s是最后一个被实例化的,s指向可变部分
-    int sum = 0;
-    while(n)
-    {
-        sum += va_arg(s,int);//int能被传递证明了va_arg是宏,因为C/C++中类型是不能用于可变参数传递的
-        // printf("hello %d, hello %s, hello %c, hello %d,", 1, "hello", 'c', 123);
-        n--;
-    }
-    va_end(s); // s = NULL;
-    return sum;
-}
+
+// int sum(int n, ...)
+// {
+//     va_list s; // char*
+//     va_start(s, n);
+
+//     int sum = 0;
+//     while(n)
+//     {
+//         sum += va_arg(s, int); // printf("hello %d, hello %s, hello %c, hello %d,", 1, "hello", 'c', 123);
+//         n--;
+//     }
+
+//     va_end(s); //s = NULL
+//     return sum;
+// }

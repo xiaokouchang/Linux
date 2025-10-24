@@ -2,16 +2,23 @@
 #include <cstdlib>
 #include <unistd.h>
 #include <strings.h>
+#include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include "Log.hpp"
+
 using namespace std;
-void Usage(string proc)
+Log lg;
+
+void Usage(std::string proc)
 {
-    cout << "\n\tUsage: " << proc << " serverip serverport\n"
-         << endl;
+    std::cout << "\n\rUsage: " << proc << " serverip serverport\n"
+              << std::endl;
 }
+
+// ./udpclient serverip serverport
 int main(int argc, char *argv[])
 {
     if (argc != 3)
@@ -19,42 +26,77 @@ int main(int argc, char *argv[])
         Usage(argv[0]);
         exit(0);
     }
-    string serverip = argv[1];          // 服务器的IP地址
-    uint16_t serverport = stoi(argv[2]); // 服务器的端口号
+    std::string serverip = argv[1];
+    uint16_t serverport = std::stoi(argv[2]);
+
     struct sockaddr_in server;
     bzero(&server, sizeof(server));
     server.sin_family = AF_INET;
-    server.sin_port = htons(serverport); 
+    server.sin_port = htons(serverport); //?
     server.sin_addr.s_addr = inet_addr(serverip.c_str());
     socklen_t len = sizeof(server);
+
     int sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd < 0)
     {
         cout << "socker error" << endl;
         return 1;
     }
-    // 客户端一定要绑定,客户端需要自己的IP和端口,只是不需要用户显示的绑定,由操作系统自由随机选择
+
+    // client 要bind吗？要！只不过不需要用户显示的bind！一般有OS自由随机选择！
+    // 一个端口号只能被一个进程bind，对server是如此，对于client，也是如此！
+    // 其实client的port是多少，其实不重要，只要能保证主机上的唯一性就可以！
+    // 系统什么时候给我bind呢？首次发送数据的时候
+
     string message;
     char buffer[1024];
     while (true)
     {
-        // 数据
         cout << "Please Enter@ ";
         getline(cin, message);
 
-        // 给谁发
+        // std::cout << message << std::endl;
+        // 1. 数据 2. 给谁发
         sendto(sockfd, message.c_str(), message.size(), 0, (struct sockaddr *)&server, len);
+
         struct sockaddr_in temp;
         socklen_t len = sizeof(temp);
-        ssize_t s = recvfrom(sockfd,buffer,1023,0,(struct sockaddr*)&temp,&len);
-        if(s > 0)
+
+        ssize_t s = recvfrom(sockfd, buffer, 1023, 0, (struct sockaddr *)&temp, &len);
+        // 发送消息后添加日志
+        ssize_t send_len = sendto(sockfd, message.c_str(), message.size(), 0, (struct sockaddr *)&server, len);
+        if (send_len < 0)
+        {
+            lg(Error, "sendto server [%s:%d] failed! errno: %d, err msg: %s", serverip.c_str(), serverport, errno, strerror(errno));
+        }
+        else
+        {
+            lg(Info, "sendto server [%s:%d] success! sent message: %s (length: %ld)", serverip.c_str(), serverport, message.c_str(), send_len);
+        }
+
+        // 接收响应前添加日志，接收后记录结果
+        lg(Info, "waiting for server response...");
+        if (s < 0)
+        {
+            lg(Error, "recvfrom server failed! errno: %d, err msg: %s", errno, strerror(errno));
+        }
+        else if (s == 0)
+        {
+            lg(Warning, "server closed connection (udp has no connection, may be error)");
+        }
+        else
+        {
+            buffer[s] = 0;
+            lg(Info, "recvfrom server success! response: %s (length: %ld)", buffer, s);
+            cout << buffer << endl;
+        }
+        if (s > 0)
         {
             buffer[s] = 0;
             cout << buffer << endl;
         }
     }
+
     close(sockfd);
     return 0;
 }
-
-
